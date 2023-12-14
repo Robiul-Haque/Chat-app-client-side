@@ -1,20 +1,19 @@
 /* eslint-disable no-unused-vars */
 import { useForm } from "react-hook-form";
 import { useContext, useState, } from "react";
-import { AuthContext } from "../Auth/AuthProvider";
+import { AuthContext } from "../../Auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
-// import { updateProfile } from "firebase/auth";
+import { updateProfile } from "firebase/auth";
 
 const SignUp = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const { emailPassSignUp, googleSignIn } = useContext(AuthContext);
     const [error, setError] = useState('');
+    const [userImgURL, setUserImgURL] = useState({});
     const navigate = useNavigate();
 
     const signUpWithCredential = data => {
         setError("");
-
-        console.log(data.name, data.email, data.image[0], data.password);
 
         const formData = new FormData;
         formData.append('name', data.name);
@@ -27,27 +26,36 @@ const SignUp = () => {
             body: formData
         })
             .then(res => res.json())
-            .then(data => console.log(data))
-            .catch(error => console.log(error))
+            .then(data => {
+                setUserImgURL(data.imgURL);
+            })
+            .catch(error => {
+                setError(error.message);
+                console.log(error);
+            })
 
-        // emailPassSignUp(data.name, data.email, data.password)
-        //     .then(result => {
-        //         const data = result;
-        //         console.log(data);
-        //         // updateProfile(data, name)
-        //         if (data._tokenResponse?.email === data.email) {
-        //             navigate("/");
-        //         }
-        //     })
-        //     .catch(error => {
-        //         setError(error.message);
-        //         console.log(error);
-        //     })
+        emailPassSignUp(data.email, data.password)
+            .then(result => {
+                const user = result.user;
+                updateUserProfileInfo(user, data.name, userImgURL);
+                navigate('/sign-in');
+            })
+            .catch(error => {
+                setError(error.message);
+                console.log(error);
+            })
+
+        const updateUserProfileInfo = (userData, userName, userImgURL) => {
+            updateProfile(userData, {
+                displayName: userName,
+                photoURL: `${userImgURL}`
+            })
+        }
     }
 
 
     const signUpWithGoogle = () => {
-        // setError("");
+        setError("");
 
         googleSignIn()
             .then(result => {
@@ -57,7 +65,7 @@ const SignUp = () => {
                 }
             })
             .catch(error => {
-                // setError(error.message);
+                setError(error.message);
                 console.log(error);
             })
     }
@@ -104,7 +112,7 @@ const SignUp = () => {
                     </div>
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text">Image</span>
+                            <span className="label-text">Profile Image</span>
                         </label>
                         <input type="file" {...register("image", {
                             required: {

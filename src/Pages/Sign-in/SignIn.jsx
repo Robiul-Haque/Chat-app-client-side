@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { useContext, useState } from "react";
-import { AuthContext } from "../Auth/AuthProvider";
+import { AuthContext } from "../../Auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
 
 const SignIn = () => {
@@ -11,13 +11,11 @@ const SignIn = () => {
 
     const signIn = data => {
         setError("");
-        console.log(data.email, data.password);
 
         emailPassSignIn(data.email, data.password)
             .then(userCredential => {
-                const data = userCredential;
-                console.log(data);
-                if (data._tokenResponse?.email === data.email) {
+                const loginUser = userCredential;
+                if (loginUser.user?.email === data.email) {
                     navigate("/");
                 }
             })

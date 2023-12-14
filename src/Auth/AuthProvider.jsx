@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-import { createContext } from "react";
-import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { createContext, useEffect, useState } from "react";
+import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import app from "../Firebase/Firebase.config";
 
 export const AuthContext = createContext(null);
@@ -9,6 +9,18 @@ const auth = getAuth(app);
 
 const AuthProvider = ({ children }) => {
     const provider = new GoogleAuthProvider();
+    const [loadingSpinner, setLoadingSpinner] = useState(true);
+    const [loginUser, setLoginUser] = useState(null);
+
+    useEffect(() => {
+        const unSubscribe = onAuthStateChanged(auth, currentUser => {
+            setLoadingSpinner(false);
+            setLoginUser(currentUser);
+            return () => {
+                return unSubscribe();
+            }
+        });
+    });
 
     const emailPassSignUp = (email, password) => {
         return createUserWithEmailAndPassword(auth, email, password);
@@ -19,14 +31,15 @@ const AuthProvider = ({ children }) => {
     }
 
     const emailPassSignIn = (email, password) => {
-        console.log(email, password);
         return signInWithEmailAndPassword(auth, email, password);
     }
 
     const authInfo = {
         emailPassSignUp,
         googleSignIn,
-        emailPassSignIn
+        emailPassSignIn,
+        loadingSpinner,
+        loginUser
     }
 
     return (
